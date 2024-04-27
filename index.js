@@ -1,8 +1,8 @@
 const express = require('express');
 const app = express();
-const { MongoClient, ServerApiVersion } = require('mongodb');
-require('dotenv').config()
 const cors = require('cors');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+require('dotenv').config()
 const port = process.env.PORT || 5000;
 
 
@@ -28,17 +28,74 @@ async function run() {
 
     const islandCollection = client.db("islandDB").collection("island")
 
-    app.get('/images', async(req, res)=>{
-        const cursor = islandCollection.find()
-        const result = await cursor.toArray();
-        res.send(result)
+    app.get('/images', async (req, res) => {
+      const cursor = islandCollection.find()
+      const result = await cursor.toArray();
+      res.send(result)
+    });
+
+    app.post('/images', async (req, res) => {
+      const newImage = req.body;
+      const result = await islandCollection.insertOne(newImage);
+      res.send(result);
+    });
+    
+    app.get('/view/:id', async(req, res)=>{
+      const id = req.params.id;
+      const query = {_id: new ObjectId(id)}
+      const result = await islandCollection.findOne(query)
+      res.send(result)
     })
 
-    app.post('/images', async(req, res)=>{
-        const newImage = req.body;
-        const result = await islandCollection.insertOne(newImage);
-        res.send(result);
-    })
+    app.get('/sorted', (req, res)=>{
+      const sortedData = islandCollection.find().sort({"totalVisitor" : 1});
+      res.send(sortedData)
+    });
+
+    app.get('/myList/:email', async (req, res) => {
+      // console.log(req.params.email)
+      const result = await islandCollection.find({ userEmail: req.params.email }).toArray();
+      res.send(result)
+    });
+
+
+    app.get('/singleData/:id', async (req, res) => {
+      console.log(req.params.id)
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await islandCollection.findOne(query);
+      res.send(result)
+    });
+
+    app.put('/update/:id', async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) }
+      const options = { upsert: true };
+      const updatedCoffee = req.body;
+      const update = {
+        $set: {
+          touristName: updatedCoffee.touristName,
+          countryName: updatedCoffee.countryName,
+          supplier: updatedCoffee.supplier,
+          location: updatedCoffee.location,
+          photo: updatedCoffee.photo,
+          averageCost: updatedCoffee.averageCost,
+          seasonality: updatedCoffee.seasonality,
+          travelTime: updatedCoffee.travelTime,
+          totalVisitor: updatedCoffee.totalVisitor,
+          description: updatedCoffee.description
+        }
+      }
+      const result = await islandCollection.updateOne(filter, update, options);
+       res.send(result);
+    });
+
+    app.delete('/singleData/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await islandCollection.deleteOne(query);
+      res.send(result)
+    });
 
 
     // Send a ping to confirm a successful connection
@@ -50,12 +107,12 @@ async function run() {
   }
 }
 run().catch(console.dir);
- 
 
-app.get('/', async(req, res)=>{
- res.send('welcome our Island-Hopper-server')
+
+app.get('/', async (req, res) => {
+  res.send('welcome our Island-Hopper-server')
 });
 
-app.listen(port, ()=>{
-    console.log('this Island-Hopper-server port is running', port);
+app.listen(port, () => {
+  console.log('this Island-Hopper-server port is running', port);
 })
