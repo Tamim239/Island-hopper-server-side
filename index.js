@@ -1,8 +1,8 @@
 const express = require('express');
 const app = express();
+const { MongoClient, ServerApiVersion } = require('mongodb');
 require('dotenv').config()
 const cors = require('cors');
-const { MongoClient, ServerApiVersion } = require('mongodb');
 const port = process.env.PORT || 5000;
 
 
@@ -24,13 +24,29 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
+    // await client.connect();
+
+    const islandCollection = client.db("islandDB").collection("island")
+
+    app.get('/images', async(req, res)=>{
+        const cursor = islandCollection.find()
+        const result = await cursor.toArray();
+        res.send(result)
+    })
+
+    app.post('/images', async(req, res)=>{
+        const newImage = req.body;
+        const result = await islandCollection.insertOne(newImage);
+        res.send(result);
+    })
+
+
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
     // Ensures that the client will close when you finish/error
-    await client.close();
+    // await client.close();
   }
 }
 run().catch(console.dir);
