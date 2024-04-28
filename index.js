@@ -40,16 +40,23 @@ async function run() {
       res.send(result);
     });
     
-    app.get('/view/:id', async(req, res)=>{
+    app.get('/images/:id', async(req, res)=>{
       const id = req.params.id;
       const query = {_id: new ObjectId(id)}
       const result = await islandCollection.findOne(query)
       res.send(result)
     })
 
-    app.get('/sorted', (req, res)=>{
-      const sortedData = islandCollection.find().sort({"totalVisitor" : 1});
-      res.send(sortedData)
+    app.get('/double/:name', async(req, res)=>{
+      const name = req.params.name;
+      const result = await islandCollection.find({countryName : name}).toArray();
+      res.send(result);
+    })
+
+    app.get('/sorted', async(req, res)=>{
+      const sortedData = islandCollection.find().sort({totalVisitor : 1});
+      const result = await sortedData.toArray()
+      res.send(result)
     });
 
     app.get('/myList/:email', async (req, res) => {
